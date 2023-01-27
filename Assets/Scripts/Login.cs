@@ -86,16 +86,27 @@ public class Login : MonoBehaviour
                 _statusText.text = $": HTTP Error: {request.error}";
                 break;
             case UnityWebRequest.Result.Success:
-                if (request.downloadHandler.text != "Invalid credential")
+
+                Debug.Log(request.downloadHandler.text + "loginresponse");
+                LoginResponse response = JsonUtility.FromJson<LoginResponse>(request.downloadHandler.text);
+                if (response.code == 0)
                 {
                     _loginButton.interactable = false;
-                    GameAccount returnedAccount = JsonUtility.FromJson<GameAccount>(request.downloadHandler.text);
-                    _statusText.text = $"Welcome {returnedAccount.username} : id: {returnedAccount._id}";
+                    _statusText.text = $"Welcome ...";
                 }
                 else
                 {
-                    _statusText.text = "Invalid credential";
-                    _loginButton.interactable = true;
+                    switch (response.code)
+                    {
+                        case 1:
+                            _statusText.text = "Invalid credentials";
+                            _loginButton.interactable = true;
+                            break;
+                        default:
+                            _statusText.text = "Corruption detected";
+                            _loginButton.interactable = false;
+                            break;
+                    }
                 }
 
                 // Clear
@@ -159,15 +170,32 @@ public class Login : MonoBehaviour
                 _statusText.text = $": HTTP Error: {request.error}";
                 break;
             case UnityWebRequest.Result.Success:
-                if (request.downloadHandler.text != "Invalid credential" && request.downloadHandler.text != "Username has been registered")
+
+                Debug.Log(request.downloadHandler.text + "registerresponse");
+                RegisterResponse response = JsonUtility.FromJson<RegisterResponse>(request.downloadHandler.text);
+
+                if (response.code == 0)
                 {
                     _registerButton.interactable = false;
-                    GameAccount returnedAccount = JsonUtility.FromJson<GameAccount>(request.downloadHandler.text);
                     _statusText.text = "Account has been created";
                 }
                 else
                 {
-                    _statusText.text = $"Username: {username} has been registered";
+                    switch (response.code)
+                    {
+                        case 1:
+                            _statusText.text = "Invalid credentials";
+                            break;
+                        case 2:
+                            _statusText.text = "Username has been registered";
+                            break;
+                        case 3:
+                            _statusText.text = "Password is unsafe";
+                            break;
+                        default:
+                            _statusText.text = "Corruption detected";
+                            break;
+                    }
                     _registerButton.interactable = true;
                 }
 
@@ -176,7 +204,6 @@ public class Login : MonoBehaviour
                 _passwordInputField.text = null;
                 break;
         }
-
         yield return null;
     }
 }
